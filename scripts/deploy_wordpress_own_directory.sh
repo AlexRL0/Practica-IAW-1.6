@@ -19,7 +19,9 @@ tar -xzvf /tmp/latest.tar.gz -C /tmp
 rm -rf /var/www/html/*
 
 # Creamos el directorio para la instalación de WordPress
-mkdir -p $WORDPRESS_DIRECTORY
+mkdir -p /var/www/html/$WORDPRESS_DIRECTORY
 
 # Movemos el código fuente de WordPress a /var/www/html
 mv -f /tmp/wordpress/* /var/www/html/$WORDPRESS_DIRECTORY
+
+exit #<--------------------------------------------------
