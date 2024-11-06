@@ -46,7 +46,7 @@ sed -i "/WP_SITEURL/a define('WP_HOME', 'https://$LE_DOMAIN');" /var/www/html/wo
 chown -R www-data:www-data /var/www/html/
 
 # Copiamos el archivo index.php
-cp /var/www/html/$WORDPRESS_DB_HOST/index.php /var/www/html
+cp /var/www/html/$WORDPRESS_DIRECTORY/index.php /var/www/html
 
 # Configuramos el archivo index.php
 sed -i "s#wp-blog-header.php#$WORDPRESS_DIRECTORY/wp-blog-header.php#" /var/www/html/index.php 
