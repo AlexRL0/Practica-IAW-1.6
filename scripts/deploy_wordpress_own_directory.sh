@@ -24,4 +24,21 @@ mkdir -p /var/www/html/$WORDPRESS_DIRECTORY
 # Movemos el código fuente de WordPress a /var/www/html
 mv -f /tmp/wordpress/* /var/www/html/$WORDPRESS_DIRECTORY
 
-exit #<--------------------------------------------------
+# Creamos la base de datos y el usuario para WordPress
+mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
+mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
+mysql -u root <<< "DROP USER IF EXISTS $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+mysql -u root <<< "CREATE USER $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL IDENTIFIED BY '$WORDPRESS_DB_PASSWORD'"
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+
+# Creamos el archivo de configuracion de WordPress
+cp /var/www/html/$WORDPRESS_DIRECTORY/wp-config-sample.php /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+
+# Configuramos el archivo de configuracion de WordPress
+sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/username_here/$WORDPRESS_DB_USER/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/password_here/$WORDPRESS_DB_PASSWORD/" /var/www/$WORDPRESS_DIRECTORY/html/wp-config.php
+sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+
+# Cambiamos el propietario y el grupo al directorio /var/www/html/
+chown -R www-data:www-data /var/www/html/
