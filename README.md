@@ -8,7 +8,7 @@
 
 **Una vez creados los archivos y directorios, procedemos a la instalación de las herramientas.**
 
-## HTTPS con Let’s Encrypt y Certbot
+## Instalación de WordPress en una instancia EC2 de AWS
 
 ## 1. Creamos un nombre de dominio para nuestro servidor con la web `no-ip`
 
@@ -16,15 +16,15 @@
 
 Para crear el nombre de dominio en la página, tenemos que registrarnos y dirigirnos al sitio que muestra la captura y darle a **crear nombre de host**.
 
-![](imagenes/no-ip.png)
+![](imagenes/no-ip-1.6.png)
 
 Una vez dado al recuadro de crear el nombre, nos sale un asistente para poner el nombre de host que queramos, el dominio que queremos que lleve, la dirección ip de la máquina o pc que queremos que tenga ese nombre de host y el tipo de registro que queremos que lleve, en nuestro caso es el **DNS Host A**
 
-![](imagenes/no-ip2.png)
+![](imagenes/no-ip2-1.6.png)
 
 Hecho esto ya podemos automatizar el proceso de obtener el certificado con Let's Encrypt
 
-## 2. Creación del archivo `setup_letsencrypt_certificate` para la automatización de la creación del certificado SSL/TLS
+## 2. Creación del archivo `deploy_wordpress_root_directory` para la instalación en la raíz
 
 ### Paso 1. Importamos el archivo de variables y mostramos los comandos que se van ejecutando 
 
@@ -36,68 +36,87 @@ source .env
 set -ex
 ```
 
-### Paso 2. Instalamos y actualizamos snap
+### Paso 2. Eliminamos descargas previas del codigo fuente de WordPress
 
 ```
-snap install core
-snap refresh core
+rm -rf /tmp/latest.tar.gz
 ```
 
-### Paso 3. Eliminamos instalaciones previas de certbot con apt
+### Paso 3. Descargamos el codigo fuente de WordPress
 
 ```
-apt remove certbot -y
+wget https://wordpress.org/latest.tar.gz -P /tmp
 ```
 
-### Paso 4. instalamos el cliente de certbot 
+> [!TIP]  
+> Hacemos esto para evitar que haya duplicados dentro de ese directorio a la hora de descargarnos el codigo fuente de WordPress.
+
+### Paso 4. Descomprimimos el codigo fuente de WordPress
 
 ```
-snap install --classic certbot
+tar -xzvf /tmp/latest.tar.gz -C /tmp
 ```
 
-### Paso 5. Solicitamos un certificado a Let's Encrypt
+> [!NOTE]  
+> Utilizamos los siguientes parámetros:
+> 
+> * `-x`: Indica que deseamos extraer el contenido del archivo.
+>
+> * `-z`: Señala que queremos descomprimir el archivo.
+>
+> * `-v`: Activa el modo detallado para mostrar en pantalla el proceso de descompresión.
+>
+> * `-f`: Se usa para especificar el nombre del archivo de entrada.
+>
+> * `-C`: Se utiliza para definir el directorio de destino.
+
+
+
+### Paso 5. Eliminamos el contenido de instalaciones previas en /var/www/html
 
 ```
-certbot --apache -m $LE_EMAIL --agree-tos --no-eff-email -d $LE_DOMAIN --non-interactive
+rm -rf /var/www/html/*
+```
+
+### Paso 6. Movemos el código fuente de WordPress a /var/www/html
+
+```
+mv -f /tmp/wordpress/* /var/www/html
+```
+
+### Paso 7. Creamos la base de datos y el usuario para WordPress
+
+```
+mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
+mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
+mysql -u root <<< "DROP USER IF EXISTS $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+mysql -u root <<< "CREATE USER $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL IDENTIFIED BY '$WORDPRESS_DB_PASSWORD'"
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
 ```
 
 > [!IMPORTANT]  
-> El certificado se lo pedimos así porque si ponemos ese comando en una terminal pide varias cosas y para que sea automatizado le pasamos todas las variables que pide y aparte, le pasamos nosotros dos variables que tenemos que crear en el archivo `.env` indicándole el email y el nombre de dominio creado de la página web `no-ip`.
+> Las variables las cambiamos por las que tenemos en el archivo `.env` configuradas para que se cree todo correctamente.
 
-### Paso 6. Deshabilitamos el host anterior y reiniciamos el servicio de apache
-
-```
-a2dissite 000-default.conf
-```
+### Paso 8. Creamos el archivo de configuracion de WordPress
 
 ```
-systemctl reload apache2
+cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+```
+
+### Paso 9. Configuramos el archivo de configuracion de WordPress
+
+```
+sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html/wp-config.php
+sed -i "s/username_here/$WORDPRESS_DB_USER/" /var/www/html/wp-config.php
+sed -i "s/password_here/$WORDPRESS_DB_PASSWORD/" /var/www/html/wp-config.php
+sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/wp-config.php
 ```
 
 > [!IMPORTANT]  
-> Esto lo hacemos ya que al hacer el certificado con cerbot y Let's Encrypt, crea un archivo nuevo de configuración llamado `000-default-le-ssl.conf` que tiene el certificado y el puerto configurado para que rediriga al 443 en vez de al 80.
+> Este archivo lo modificamos ya que el original tiene unas variables que no tenemos y que si dejamos el archivo tal cual como viene pues no funcionaría. Así que, con el comando `sed -i` lo cambiamos con nuestras variables que tenemos en el archivo `.env`.
 
-### Paso 7. Habilitamos el host nuevo y reiniciamos el servicio de apache
-
-```
-a2ensite 000-default-le-ssl.conf
-```
+### Paso 10. Cambiamos el propietario y el grupo al directorio /var/www/html/
 
 ```
-systemctl reload apache2
+chown -R www-data:www-data /var/www/html/
 ```
-
-### Paso 8. Hacemos que el host nuevo lea primero los archivos php antes que los de html
-
-> [!IMPORTANT]  
-> Hay que hacer esto ya que al entrar a la web, nos saldrá la página por defecto de apache y no queremos que pase eso ya que tenemos creado un `index.php` para que al entrar, aparezca esa página en vez de la de apache, así que con `nano` modificamos el archivo `000-default-le-ssl.conf` y le añadimos la línea `    DirectoryIndex index.php index.html`. Debe de quedar el archivo como en la siguiente imagen:
-
-![](imagenes/000-default-le-ssl.png)
-
-Una vez hecho esto, ya podemos acceder a la web y comprobar que entra correctamente con https en vez de http, y que si intentamos poner http redirige sólo al https.
-
-![](imagenes/web.png)
-
-Y si miramos el certificado de la página, aparece que está hecho con Let's Encrypt y el nombre del dominio y datos que le pusimos a la hora de crear el directorio.
-
-![](imagenes/Certificado.png)
