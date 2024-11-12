@@ -4,7 +4,7 @@
 
 **para la instalación vamos a tener que crear la siguiente estructura de directorios y archivos:**
 
-![](imagenes/directorio-1.5.png)
+![](imagenes/directorio-1.6.png)
 
 **Una vez creados los archivos y directorios, procedemos a la instalación de las herramientas.**
 
