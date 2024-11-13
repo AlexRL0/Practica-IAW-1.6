@@ -129,3 +129,48 @@ chown -R www-data:www-data /var/www/html/
 
 ![](imagenes/WordPress3-1.6.png)
 
+----
+## 3. Creación del archivo `deploy_wordpress_own_directory` para la instalación en la raíz
+
+### Paso 1. Importamos el archivo de variables y mostramos los comandos que se van ejecutando 
+
+```
+source .env
+```
+
+```
+set -ex
+```
+
+### Paso 2. Eliminamos descargas previas del codigo fuente de WordPress
+
+```
+rm -rf /tmp/latest.tar.gz
+```
+
+### Paso 3. Descargamos el codigo fuente de WordPress
+
+```
+wget https://wordpress.org/latest.tar.gz -P /tmp
+```
+
+### Paso 4. Descomprimimos el codigo fuente de WordPress
+
+```
+tar -xzvf /tmp/latest.tar.gz -C /tmp
+```
+
+### Paso 5. Eliminamos el contenido de instalaciones previas en /var/www/html
+
+```
+rm -rf /var/www/html/*
+```
+
+### Paso 6. Creamos el directorio para la instalación de WordPress
+
+```
+mkdir -p /var/www/html/$WORDPRESS_DIRECTORY
+```
+
+> [!IMPORTANT]  
+> Las variables que irán apareciendo durante los pasos están todas definidas en el archivo `.env` y en `.env.example` se pueden ver las variables que hay que tener definidas.
