@@ -200,7 +200,7 @@ cp /var/www/html/$WORDPRESS_DIRECTORY/wp-config-sample.php /var/www/html/$WORDPR
 ### Paso 10. Configuramos el archivo de configuracion de WordPress
 
 ```bash
-sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html $WORDPRESS_DIRECTORY/wp-config.php
 sed -i "s/username_here/$WORDPRESS_DB_USER/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
 sed -i "s/password_here/$WORDPRESS_DB_PASSWORD/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
 sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
@@ -208,3 +208,63 @@ sed -i "/DB_COLLATE/a define('WP_SITEURL', 'https://$LE_DOMAIN/$WORDPRESS_DIRECT
 sed -i "/WP_SITEURL/a define('WP_HOME', 'https://$LE_DOMAIN');" /var/www/html/wordpress/wp-config.php
 ```
 
+### Paso 11. Cambiamos el propietario y el grupo al directorio /var/www/html/
+
+```bash
+chown -R www-data:www-data /var/www/html/
+```
+
+### Paso 12. Copiamos el archivo index.php
+
+```bash
+cp /var/www/html/$WORDPRESS_DIRECTORY/index.php /var/www/html
+```
+
+### Paso 13. Configuramos el archivo index.php
+
+```bash
+sed -i "s#wp-blog-header.php#$WORDPRESS_DIRECTORY/wp-blog-header.php#" /var/www/html/index.php
+```
+
+### Paso 14. Borramos los valores por defecto de las security keys que aparecen en el archivo de configuración
+
+```bash
+sed -i "/AUTH_KEY/d" /var/www/html/wordpress/wp-config.php
+sed -i "/SECURE_AUTH_KEY/d" /var/www/html/wordpress/wp-config.php
+sed -i "/LOGGED_IN_KEY/d" /var/www/html/wordpress/wp-config.php
+sed -i "/NONCE_KEY/d" /var/www/html/wordpress/wp-config.php
+sed -i "/AUTH_SALT/d" /var/www/html/wordpress/wp-config.php
+sed -i "/SECURE_AUTH_SALT/d" /var/www/html/wordpress/wp-config.php
+sed -i "/LOGGED_IN_SALT/d" /var/www/html/wordpress/wp-config.php
+sed -i "/NONCE_SALT/d" /var/www/html/wordpress/wp-config.php
+```
+
+> [!IMPORTANT]  
+> Eliminamos los valores por defecto de las security keys que aparecen en el archivo de configuración para generar unas nuevas con la API de WordPress.
+
+### Paso 15. Hacemos una llamada a la API de wordpress para obtener las security keys y almacenamos el resultado en una variable de entorno
+
+```bash
+SECURITY_KEYS=$(curl https://api.wordpress.org/secret-key/1.1/salt/)
+```
+
+### Paso 16. Modificamos las nuevas security keys
+
+```bash
+SECURITY_KEYS=$(echo $SECURITY_KEYS | tr / _)
+```
+
+> [!IMPORTANT]  
+> Las nuevas security keys que acabamos de generar pueden contener el carácter / y este carácter puede darnos problemas a la hora de utilizar el comando sed para añadirlas al archivo de configuración. Para evitar posibles problemas con el carácter / vamos a reemplazarlo por el carácter _..
+
+### Paso 17. Añadimos las security keys al archivo de configuración
+
+```bash
+sed -i "/@-/a $SECURITY_KEYS" /var/www/html/wordpress/wp-config.php
+```
+
+### Paso 18. Cambiamos el propietario y el grupo al directorio /var/www/html
+
+```bash
+chown -R www-data:www-data /var/www/html/
+```
