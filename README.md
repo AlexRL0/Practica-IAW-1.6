@@ -120,3 +120,12 @@ sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/wp-config.php
 ```
 chown -R www-data:www-data /var/www/html/
 ```
+
+### Paso 11. Comprobación de que funciona WordPress
+
+![](imagenes/WordPress-1.6.png)
+
+![](imagenes/WordPress2-1.6.png)
+
+![](imagenes/WordPress3-1.6.png)
+
