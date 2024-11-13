@@ -28,23 +28,23 @@ Hecho esto ya podemos automatizar el proceso de obtener el certificado con Let's
 
 ### Paso 1. Importamos el archivo de variables y mostramos los comandos que se van ejecutando 
 
-```
+```bash
 source .env
 ```
 
-```
+```bash
 set -ex
 ```
 
 ### Paso 2. Eliminamos descargas previas del codigo fuente de WordPress
 
-```
+```bash
 rm -rf /tmp/latest.tar.gz
 ```
 
 ### Paso 3. Descargamos el codigo fuente de WordPress
 
-```
+```bash
 wget https://wordpress.org/latest.tar.gz -P /tmp
 ```
 
@@ -53,7 +53,7 @@ wget https://wordpress.org/latest.tar.gz -P /tmp
 
 ### Paso 4. Descomprimimos el codigo fuente de WordPress
 
-```
+```bash
 tar -xzvf /tmp/latest.tar.gz -C /tmp
 ```
 
@@ -74,19 +74,19 @@ tar -xzvf /tmp/latest.tar.gz -C /tmp
 
 ### Paso 5. Eliminamos el contenido de instalaciones previas en /var/www/html
 
-```
+```bash
 rm -rf /var/www/html/*
 ```
 
 ### Paso 6. Movemos el código fuente de WordPress a /var/www/html
 
-```
+```bash
 mv -f /tmp/wordpress/* /var/www/html
 ```
 
 ### Paso 7. Creamos la base de datos y el usuario para WordPress
 
-```
+```bash
 mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
 mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
 mysql -u root <<< "DROP USER IF EXISTS $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
@@ -99,13 +99,13 @@ mysql -u root <<< "GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO $WORDPRESS_DB
 
 ### Paso 8. Creamos el archivo de configuracion de WordPress
 
-```
+```bash
 cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
 ```
 
 ### Paso 9. Configuramos el archivo de configuracion de WordPress
 
-```
+```bash
 sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html/wp-config.php
 sed -i "s/username_here/$WORDPRESS_DB_USER/" /var/www/html/wp-config.php
 sed -i "s/password_here/$WORDPRESS_DB_PASSWORD/" /var/www/html/wp-config.php
@@ -117,7 +117,7 @@ sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/wp-config.php
 
 ### Paso 10. Cambiamos el propietario y el grupo al directorio /var/www/html/
 
-```
+```bash
 chown -R www-data:www-data /var/www/html/
 ```
 
@@ -134,43 +134,77 @@ chown -R www-data:www-data /var/www/html/
 
 ### Paso 1. Importamos el archivo de variables y mostramos los comandos que se van ejecutando 
 
-```
+```bash
 source .env
 ```
 
-```
+```bash
 set -ex
 ```
 
 ### Paso 2. Eliminamos descargas previas del codigo fuente de WordPress
 
-```
+```bash
 rm -rf /tmp/latest.tar.gz
 ```
 
 ### Paso 3. Descargamos el codigo fuente de WordPress
 
-```
+```bash
 wget https://wordpress.org/latest.tar.gz -P /tmp
 ```
 
 ### Paso 4. Descomprimimos el codigo fuente de WordPress
 
-```
+```bash
 tar -xzvf /tmp/latest.tar.gz -C /tmp
 ```
 
 ### Paso 5. Eliminamos el contenido de instalaciones previas en /var/www/html
 
-```
+```bash
 rm -rf /var/www/html/*
 ```
 
 ### Paso 6. Creamos el directorio para la instalación de WordPress
 
-```
+```bash
 mkdir -p /var/www/html/$WORDPRESS_DIRECTORY
 ```
 
 > [!IMPORTANT]  
 > Las variables que irán apareciendo durante los pasos están todas definidas en el archivo `.env` y en `.env.example` se pueden ver las variables que hay que tener definidas.
+
+### Paso 7. Movemos el código fuente de WordPress a /var/www/html
+
+```bash
+mv -f /tmp/wordpress/* /var/www/html/$WORDPRESS_DIRECTORY
+```
+
+### Paso 8. # Creamos la base de datos y el usuario para WordPress
+
+```bash
+mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
+mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
+mysql -u root <<< "DROP USER IF EXISTS $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+mysql -u root <<< "CREATE USER $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL IDENTIFIED BY '$WORDPRESS_DB_PASSWORD'"
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+```
+
+### Paso 9. Creamos el archivo de configuracion de WordPress
+
+```bash
+cp /var/www/html/$WORDPRESS_DIRECTORY/wp-config-sample.php /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+```
+
+### Paso 10. Configuramos el archivo de configuracion de WordPress
+
+```bash
+sed -i "s/database_name_here/$WORDPRESS_DB_NAME/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/username_here/$WORDPRESS_DB_USER/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/password_here/$WORDPRESS_DB_PASSWORD/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "s/localhost/$WORDPRESS_DB_HOST/" /var/www/html/$WORDPRESS_DIRECTORY/wp-config.php
+sed -i "/DB_COLLATE/a define('WP_SITEURL', 'https://$LE_DOMAIN/$WORDPRESS_DIRECTORY');" /var/www/html/wordpress/wp-config.php
+sed -i "/WP_SITEURL/a define('WP_HOME', 'https://$LE_DOMAIN');" /var/www/html/wordpress/wp-config.php
+```
+
