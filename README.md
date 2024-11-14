@@ -271,8 +271,8 @@ chown -R www-data:www-data /var/www/html/
 
 ### Paso 19. Comprobación de que WordPress funciona
 
-![](imagenes/WordPress-1.6.png)
+![](imagenes/wordpress4-1.6.png)
 
-![](imagenes/WordPress2-1.6.png)
+![](imagenes/wordpress5-1.6.png)
 
-![](imagenes/WordPress3-1.6.png)
+![](imagenes/wordpress6-1.6.png)
