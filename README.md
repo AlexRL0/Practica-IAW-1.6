@@ -22,7 +22,7 @@ Una vez dado al recuadro de crear el nombre, nos sale un asistente para poner el
 
 ![](imagenes/no-ip2-1.6.png)
 
-Hecho esto ya podemos automatizar el proceso de obtener el certificado con Let's Encrypt
+Hecho esto ya podemos automatizar el proceso de la instalación de WordPress en una instancia EC2 de AWS
 
 ## 2. Creación del archivo `deploy_wordpress_root_directory` para la instalación en la raíz
 
