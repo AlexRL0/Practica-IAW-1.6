@@ -42,14 +42,14 @@ set -ex
 rm -rf /tmp/latest.tar.gz
 ```
 
+> [!TIP]  
+> Hacemos esto para evitar que haya duplicados dentro de ese directorio a la hora de descargarnos el codigo fuente de WordPress.
+
 ### Paso 3. Descargamos el codigo fuente de WordPress
 
 ```bash
 wget https://wordpress.org/latest.tar.gz -P /tmp
 ```
-
-> [!TIP]  
-> Hacemos esto para evitar que haya duplicados dentro de ese directorio a la hora de descargarnos el codigo fuente de WordPress.
 
 ### Paso 4. Descomprimimos el codigo fuente de WordPress
 
